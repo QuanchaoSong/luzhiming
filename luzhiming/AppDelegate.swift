@@ -49,18 +49,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // 禁用自动窗口恢复
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag {
-            floatingWindow?.makeKeyAndOrderFront(nil)
+            floatingWindow?.orderFront(nil)
         }
         return true
     }
     
     private func createFloatingWindow() {
         // 设置窗口尺寸和位置
-        let windowSize = NSSize(width: 30, height: 30)
+        let windowSize = NSSize(width: 80, height: 80)  // 临时改成更小的尺寸来验证
         let screenFrame = NSScreen.main?.frame ?? NSRect.zero
         let windowFrame = NSRect(
-            x: screenFrame.midX - windowSize.width / 2,
-            y: screenFrame.midY - windowSize.height / 2,
+            x: screenFrame.width - windowSize.width - 40,
+            y: screenFrame.height - windowSize.height - 40,
             width: windowSize.width,
             height: windowSize.height
         )
@@ -78,20 +78,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         floatingWindow?.backgroundColor = NSColor.clear
         floatingWindow?.level = NSWindow.Level.floating
         floatingWindow?.isMovableByWindowBackground = false  // 禁用默认拖动
-        floatingWindow?.hasShadow = true
+        floatingWindow?.hasShadow = false  // 关闭阴影避免影响尺寸
         floatingWindow?.canHide = false
         floatingWindow?.collectionBehavior = [.canJoinAllSpaces, .stationary]
         
-        // 设置窗口大小限制，确保不能调整大小
-        floatingWindow?.minSize = windowSize
+        // 强制设置窗口大小，忽略系统最小尺寸限制
+        floatingWindow?.setContentSize(windowSize)
+        floatingWindow?.minSize = NSSize(width: 1, height: 1)  // 设置最小尺寸为1x1
         floatingWindow?.maxSize = windowSize
         
         // 创建视图控制器
-        let viewController = ViewController()
+        let viewController = MainVC()
         floatingWindow?.contentViewController = viewController
         
-        // 显示窗口
-        floatingWindow?.makeKeyAndOrderFront(nil)
+        // 再次强制设置窗口尺寸
+        floatingWindow?.setFrame(windowFrame, display: false)
+        
+        // 显示窗口 (不设置为 key window 以避免警告)
+        floatingWindow?.orderFront(nil)
+        
+        // 最后一次确保窗口尺寸
+        DispatchQueue.main.async {
+            self.floatingWindow?.setContentSize(windowSize)
+        }
         
         // 隐藏dock图标和菜单栏（可选）
         NSApp.setActivationPolicy(.accessory)
