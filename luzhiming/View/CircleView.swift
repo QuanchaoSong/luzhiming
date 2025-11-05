@@ -11,34 +11,40 @@ class CircleView: NSView {
     
     private var isDragging = false
     private var dragOffset = NSPoint.zero
-    private var randomColor: NSColor
+    
+    // 颜色定义
+    private let idleColor = NSColor.systemPurple.withAlphaComponent(0.8)
+    private let recordingColor = NSColor.systemOrange.withAlphaComponent(0.8)
     
     override init(frame frameRect: NSRect) {
-        // 生成随机颜色
-        randomColor = NSColor(
-            red: CGFloat.random(in: 0.3...1.0),
-            green: CGFloat.random(in: 0.3...1.0),
-            blue: CGFloat.random(in: 0.3...1.0),
-            alpha: 0.8
-        )
         super.init(frame: frameRect)
         setupView()
+        setupRecordingCallback()
     }
     
     required init?(coder: NSCoder) {
-        randomColor = NSColor.systemBlue.withAlphaComponent(0.8)
         super.init(coder: coder)
         setupView()
+        setupRecordingCallback()
     }
     
     private func setupView() {
         wantsLayer = true
         layer?.cornerRadius = 40
-        layer?.backgroundColor = randomColor.cgColor
+        layer?.backgroundColor = idleColor.cgColor
         
-        // 添加边框以便更清楚地看到尺寸
+        // 添加边框
         layer?.borderWidth = 1
         layer?.borderColor = NSColor.white.withAlphaComponent(0.16).cgColor
+    }
+    
+    private func setupRecordingCallback() {
+        // 监听录音状态变化
+        AudioRecordTool.shared.onRecordingStateChanged = { [weak self] isRecording in
+            DispatchQueue.main.async {
+                self?.updateColor(isRecording: isRecording)
+            }
+        }
     }
     
     override func layout() {
@@ -71,6 +77,22 @@ class CircleView: NSView {
     }
     
     override func mouseUp(with event: NSEvent) {
+        // 如果只是点击（没有拖动），则切换录音状态
+        if !isDragging || abs(event.locationInWindow.x - dragOffset.x) < 5 && abs(event.locationInWindow.y - dragOffset.y) < 5 {
+            AudioRecordTool.shared.toggleRecording()
+        }
         isDragging = false
+    }
+    
+    // MARK: - 颜色更新
+    
+    private func updateColor(isRecording: Bool) {
+        let newColor = isRecording ? recordingColor : idleColor
+        
+        // 添加动画效果
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.3
+            self.layer?.backgroundColor = newColor.cgColor
+        }
     }
 }
