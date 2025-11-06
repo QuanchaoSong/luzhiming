@@ -6,6 +6,7 @@
 //
 
 import Cocoa
+import Alamofire
 
 class MainVC: NSViewController {
     
@@ -14,6 +15,14 @@ class MainVC: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupCircleView()
+        
+        AF.request("https://api2.serverpulse.work/health").response { resp in
+            if let error = resp.error {
+                print("Request failed: \(error)")
+            } else {
+                print("Request ok, status: \(resp.response?.statusCode ?? -1)")
+            }
+        }
     }
     
     override func viewDidAppear() {
