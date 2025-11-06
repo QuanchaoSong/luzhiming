@@ -56,7 +56,7 @@ class CircleView: NSView {
     // MARK: - 拖动功能
     
     override func mouseDown(with event: NSEvent) {
-        isDragging = true
+        isDragging = false  // 重置拖动状态
         let mouseLocationInWindow = event.locationInWindow
         dragOffset = NSPoint(
             x: mouseLocationInWindow.x,
@@ -65,7 +65,8 @@ class CircleView: NSView {
     }
     
     override func mouseDragged(with event: NSEvent) {
-        guard isDragging, let window = self.window else { return }
+        isDragging = true  // 只有在拖动时才标记为 true
+        guard let window = self.window else { return }
         
         let mouseLocationInScreen = NSEvent.mouseLocation
         let newWindowOrigin = NSPoint(
@@ -77,8 +78,8 @@ class CircleView: NSView {
     }
     
     override func mouseUp(with event: NSEvent) {
-        // 如果只是点击（没有拖动），则切换录音状态
-        if !isDragging || abs(event.locationInWindow.x - dragOffset.x) < 5 && abs(event.locationInWindow.y - dragOffset.y) < 5 {
+        // 只有在没有拖动的情况下才切换录音状态
+        if !isDragging {
             AudioRecordTool.shared.toggleRecording()
         }
         isDragging = false

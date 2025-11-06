@@ -64,3 +64,6 @@ Pods/
 # SweetPad
 *.sp
 buildServer.json
+
+# VSCode
+.vscode/
