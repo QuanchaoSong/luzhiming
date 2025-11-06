@@ -74,6 +74,33 @@ class AudioRecordTool {
         }
     }
     
+    // MARK: - 路径与目录
+    private var baseDirectory: URL {
+        // ~/.luzhiming
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".luzhiming", isDirectory: true)
+    }
+    
+    private var audioRecordingsDirectory: URL {
+        // ~/.luzhiming/audio_recordings
+        baseDirectory.appendingPathComponent("audio_recordings", isDirectory: true)
+    }
+    
+    private func ensureAppDirectories() {
+        let fm = FileManager.default
+        do {
+            if !fm.fileExists(atPath: baseDirectory.path) {
+                try fm.createDirectory(at: baseDirectory, withIntermediateDirectories: true)
+                print("📁 已创建目录: \(baseDirectory.path)")
+            }
+            if !fm.fileExists(atPath: audioRecordingsDirectory.path) {
+                try fm.createDirectory(at: audioRecordingsDirectory, withIntermediateDirectories: true)
+                print("📁 已创建目录: \(audioRecordingsDirectory.path)")
+            }
+        } catch {
+            print("❌ 创建应用目录失败: \(error.localizedDescription)")
+        }
+    }
+    
     // MARK: - 录音控制
     
     /// 开始录音
@@ -88,15 +115,17 @@ class AudioRecordTool {
             return
         }
         
-        print("🎤 开始录音")
-        
-        // 设置录音文件路径
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    print("🎤 开始录音")
+
+    // 确保目录存在：~/.luzhiming/audio_recordings/
+    ensureAppDirectories()
+
+    // 设置录音文件路径到 ~/.luzhiming/audio_recordings/
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
         let dateString = dateFormatter.string(from: Date())
-        let audioFilename = documentsPath.appendingPathComponent("recording_\(dateString).m4a")
-        
+    let audioFilename = audioRecordingsDirectory.appendingPathComponent("recording_\(dateString).m4a")
+
         // 保存当前录音的 URL
         currentRecordingURL = audioFilename
         
