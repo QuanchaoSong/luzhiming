@@ -16,33 +16,9 @@ class MainVC: NSViewController {
         super.viewDidLoad()
         setupCircleView()
         
-//        AF.request("https://api2.serverpulse.work/health").response { resp in
-//            if let error = resp.error {
-//                print("Request failed: \(error)")
-//            } else {
-//                print("Request ok, status: \(resp.response?.statusCode ?? -1)")
-//            }
-//        }
-
-        // 如需使用智谱 ASR，请先设置 API Key（也可通过环境变量 ZHIPU_API_KEY 提供）
-        // HttpDiggerZhipu.shared.configure(apiKey: "zhipu-xxxxxxxx")
-
-        // 示例：尝试把最新一条 WAV 录音发送到智谱 ASR（过滤只取 .wav）
-        if let lastURL = AudioRecordTool.shared.recordingFiles.last(where: { $0.pathExtension.lowercased() == "wav" }) {
-            print("lastWavURL: \(lastURL)")
-            HttpDiggerZhipu.shared.transcribe(fileURL: lastURL) { result in
-                switch result {
-                case .success(let resp):
-                    print("[ZHIPU ASR] text=\(resp.text ?? "<nil>")")
-                    if let segs = resp.segments, !segs.isEmpty {
-                        print("[ZHIPU ASR] segments: \(segs.count)")
-                    }
-                case .failure(let error):
-                    print("[ZHIPU ASR] failed: \(error.localizedDescription)")
-                }
-            }
-        } else {
-            print("[ZHIPU ASR] 暂无 WAV 录音文件可用于转写")
+        // 录音完成后，自动调用智谱 ASR 进行转写
+        AudioRecordTool.shared.onRecordingCompleted = { fileURL in
+            self.transcribeAudioWithZhipu(fileURL: fileURL);
         }
     }
     
@@ -71,5 +47,24 @@ class MainVC: NSViewController {
             circleView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             circleView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+    
+    private func transcribeAudioWithZhipu(fileURL: URL) {
+        print("[ZHIPU ASR] 开始转写: \(fileURL.lastPathComponent)")
+        HttpDiggerZhipu.shared.transcribe(fileURL: fileURL) { result in
+            switch result {
+            case .success(let resp):
+                let text = resp.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                if !text.isEmpty {
+                    print("[ZHIPU ASR] text=\(text)")
+                    GlobalTool.copyToClipboard(text)
+                    print("[ZHIPU ASR] 已复制到剪贴板")
+                } else {
+                    print("[ZHIPU ASR] 未返回可用文本")
+                }
+            case .failure(let error):
+                print("[ZHIPU ASR] failed: \(error.localizedDescription)")
+            }
+        }
     }
 }

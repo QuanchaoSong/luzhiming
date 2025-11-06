@@ -23,6 +23,8 @@ class AudioRecordTool {
     
     // 录音状态回调
     var onRecordingStateChanged: ((Bool) -> Void)?
+    // 录音完成回调（返回生成的文件 URL）
+    var onRecordingCompleted: ((URL) -> Void)?
     
     // MARK: - 初始化
     private init() {
@@ -175,6 +177,9 @@ class AudioRecordTool {
                 let sizeInMB = Double(fileSize) / 1024.0 / 1024.0
                 print("   文件大小: \(String(format: "%.2f", sizeInMB)) MB")
             }
+
+            // 回调：录音完成，返回文件 URL
+            onRecordingCompleted?(url)
         } else {
             print("⚠️ 录音文件不存在或未保存")
         }
