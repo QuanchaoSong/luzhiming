@@ -109,23 +109,23 @@ class AudioRecordTool {
             print("❌ 无麦克风权限，无法录音")
             return
         }
-
+        
         guard !isRecording else {
             print("⚠️ 已在录音中")
             return
         }
         
-    print("🎤 开始录音")
-
-    // 确保目录存在：~/.luzhiming/audio_recordings/
-    ensureAppDirectories()
-
-    // 设置录音文件路径到 ~/.luzhiming/audio_recordings/
+        print("🎤 开始录音")
+        
+        // 确保目录存在：~/.luzhiming/audio_recordings/
+        ensureAppDirectories()
+        
+        // 设置录音文件路径到 ~/.luzhiming/audio_recordings/
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
         let dateString = dateFormatter.string(from: Date())
-    let audioFilename = audioRecordingsDirectory.appendingPathComponent("recording_\(dateString).m4a")
-
+        let audioFilename = audioRecordingsDirectory.appendingPathComponent("recording_\(dateString).m4a")
+        
         // 保存当前录音的 URL
         currentRecordingURL = audioFilename
         

@@ -9,9 +9,9 @@ import Cocoa
 
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
-
+    
     var floatingWindow: NSWindow?
-
+    
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // 关闭所有默认窗口
         for window in NSApp.windows {
@@ -32,11 +32,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
     }
-
+    
     func applicationWillTerminate(_ aNotification: Notification) {
         // Insert code here to tear down your application
     }
-
+    
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         return true
     }

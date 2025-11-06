@@ -8,9 +8,9 @@
 import Cocoa
 
 class MainVC: NSViewController {
-
+    
     private var circleView: CircleView!
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupCircleView()
@@ -28,7 +28,12 @@ class MainVC: NSViewController {
         circleView = CircleView()
         circleView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(circleView)
-
+        
+        // 将点击行为移动到这里：点击圆形视图时切换录音
+        circleView.onTap = {
+            AudioRecordTool.shared.toggleRecording()
+        }
+        
         // 设置约束，让圆形视图填满整个窗口
         NSLayoutConstraint.activate([
             circleView.topAnchor.constraint(equalTo: view.topAnchor),

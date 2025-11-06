@@ -12,6 +12,9 @@ class CircleView: NSView {
     private var isDragging = false
     private var dragOffset = NSPoint.zero
     
+    // 点击事件回调，由外部（如 MainVC）注入具体行为
+    var onTap: (() -> Void)?
+    
     // 颜色定义
     private let idleColor = NSColor.systemPurple.withAlphaComponent(0.8)
     private let recordingColor = NSColor.systemOrange.withAlphaComponent(0.8)
@@ -80,7 +83,7 @@ class CircleView: NSView {
     override func mouseUp(with event: NSEvent) {
         // 只有在没有拖动的情况下才切换录音状态
         if !isDragging {
-            AudioRecordTool.shared.toggleRecording()
+            onTap?()
         }
         isDragging = false
     }
