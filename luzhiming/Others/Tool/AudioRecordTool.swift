@@ -120,21 +120,24 @@ class AudioRecordTool {
         // 确保目录存在：~/.luzhiming/audio_recordings/
         ensureAppDirectories()
         
-        // 设置录音文件路径到 ~/.luzhiming/audio_recordings/
+    // 设置录音文件路径到 ~/.luzhiming/audio_recordings/
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
         let dateString = dateFormatter.string(from: Date())
-        let audioFilename = audioRecordingsDirectory.appendingPathComponent("recording_\(dateString).m4a")
+    // 使用 WAV（Linear PCM），便于后端（如智谱 ASR）直接识别
+    let audioFilename = audioRecordingsDirectory.appendingPathComponent("recording_\(dateString).wav")
         
         // 保存当前录音的 URL
         currentRecordingURL = audioFilename
         
-        // 录音设置
+        // 录音设置（WAV / Linear PCM，16-bit，单声道，16kHz）
         let settings: [String: Any] = [
-            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 44100.0,
+            AVFormatIDKey: Int(kAudioFormatLinearPCM),
+            AVSampleRateKey: 16000.0,
             AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+            AVLinearPCMBitDepthKey: 16,
+            AVLinearPCMIsBigEndianKey: false,
+            AVLinearPCMIsFloatKey: false
         ]
         
         do {
