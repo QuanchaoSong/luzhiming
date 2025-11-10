@@ -14,22 +14,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // 关闭所有默认窗口
-        for window in NSApp.windows {
-            if window != floatingWindow {
-                window.close()
-            }
-        }
+        clearAllOtherWindows()
         
         // 创建圆形悬浮窗
         createFloatingWindow()
         
         // 再次确保关闭其他窗口
         DispatchQueue.main.async {
-            for window in NSApp.windows {
-                if window != self.floatingWindow {
-                    window.close()
-                }
-            }
+            self.clearAllOtherWindows()
         }
     }
     
@@ -104,6 +96,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // 隐藏dock图标和菜单栏（可选）
         NSApp.setActivationPolicy(.accessory)
+    }
+    
+    func clearAllOtherWindows() {
+        for window in NSApp.windows {
+            if window != self.floatingWindow {
+                window.close()
+            }
+        }
     }
 }
 
