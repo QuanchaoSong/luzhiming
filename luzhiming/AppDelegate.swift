@@ -11,8 +11,8 @@ import Cocoa
 class AppDelegate: NSObject, NSApplicationDelegate {
     
     var floatingWindow: NSWindow?
-    
     var statusItem: NSStatusItem!
+    var settingsPopover: NSPopover?
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // 关闭所有默认窗口
@@ -129,7 +129,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func statusBarButtonClicked(_ sender: AnyObject?) {
         guard let event = NSApp.currentEvent else { return }
         
-        if event.type == .rightMouseUp {
+        if event.type == .leftMouseUp {
             // 右键点击：显示菜单
             showMenu()
         } else {
@@ -143,7 +143,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         
         // 添加菜单项
-        let openItem = NSMenuItem(title: "打开主窗口", action: #selector(openMainWindow), keyEquivalent: "o")
+        let openItem = NSMenuItem(title: "设置", action: #selector(openSettingsPopover), keyEquivalent: "")
         openItem.target = self
         
         let quitItem = NSMenuItem(title: "退出", action: #selector(quitApp), keyEquivalent: "q")
@@ -173,6 +173,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @objc func openMainWindow() {
         toggleMainWindow()
+    }
+    
+    // MARK: - Settings Popover
+    @objc func openSettingsPopover() {
+        if settingsPopover == nil {
+            let popover = NSPopover()
+            popover.contentViewController = SettingsViewController()
+            popover.behavior = .transient  // 点击外部自动关闭
+            popover.contentSize = NSSize(width: 300, height: 200)
+            settingsPopover = popover
+        }
+        
+        // 在状态栏按钮处显示popover
+        if let button = statusItem.button, let popover = settingsPopover {
+            if popover.isShown {
+                popover.performClose(nil)
+            } else {
+                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            }
+        }
     }
     
     @objc func quitApp() {
