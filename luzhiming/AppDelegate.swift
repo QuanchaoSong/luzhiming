@@ -12,6 +12,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     var floatingWindow: NSWindow?
     
+    var statusItem: NSStatusItem!
+    
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // 关闭所有默认窗口
         clearAllOtherWindows()
@@ -19,9 +21,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 创建圆形悬浮窗
         createFloatingWindow()
         
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        
+        // 配置按钮
+        if let button = statusItem.button {
+            // 设置图标
+            button.image = NSImage(named: "tray_icon") // 你的图标名称
+            button.image?.size = NSSize(width: 18.0, height: 18.0) // 图标显示尺寸[^9^]
+            //                    button.image?.isTemplate = true // 自动适配深浅色主题
+            
+            // 设置点击事件（左键和右键）
+            button.action = #selector(statusBarButtonClicked(_:))
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp]) // 支持左右键[^9^]
+            
+            // 设置悬停提示
+            button.toolTip = "鹿之鸣"
+        }
+        
         // 再次确保关闭其他窗口
         DispatchQueue.main.async {
-            self.clearAllOtherWindows()
+            //            self.clearAllOtherWindows()
         }
     }
     
@@ -100,10 +119,64 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func clearAllOtherWindows() {
         for window in NSApp.windows {
-            if window != self.floatingWindow {
+            if (window != self.floatingWindow || window != self.statusItem) {
                 window.close()
             }
         }
+    }
+    
+    // 点击事件处理
+    @objc func statusBarButtonClicked(_ sender: AnyObject?) {
+        guard let event = NSApp.currentEvent else { return }
+        
+        if event.type == .rightMouseUp {
+            // 右键点击：显示菜单
+            showMenu()
+        } else {
+            // 左键点击：显示/隐藏主窗口
+            toggleMainWindow()
+        }
+    }
+    
+    // 显示菜单
+    func showMenu() {
+        let menu = NSMenu()
+        
+        // 添加菜单项
+        let openItem = NSMenuItem(title: "打开主窗口", action: #selector(openMainWindow), keyEquivalent: "o")
+        openItem.target = self
+        
+        let quitItem = NSMenuItem(title: "退出", action: #selector(quitApp), keyEquivalent: "q")
+        quitItem.target = self
+        
+        menu.addItem(openItem)
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(quitItem)
+        
+        // 弹出菜单
+        statusItem.menu = menu
+        statusItem.button?.performClick(nil) // 触发显示
+        statusItem.menu = nil // 重置，避免影响点击行为
+    }
+    
+    // 切换主窗口显示
+    @objc func toggleMainWindow() {
+        //            if let window = mainWindow {
+        //                if window.isVisible {
+        //                    window.orderOut(nil)
+        //                } else {
+        //                    window.makeKeyAndOrderFront(nil)
+        //                    NSApp.activate(ignoringOtherApps: true)
+        //                }
+        //            }
+    }
+    
+    @objc func openMainWindow() {
+        toggleMainWindow()
+    }
+    
+    @objc func quitApp() {
+        NSApp.terminate(nil)
     }
 }
 
