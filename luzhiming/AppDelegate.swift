@@ -143,7 +143,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         
         // 添加菜单项
-        let openItem = NSMenuItem(title: "设置", action: #selector(openSettingsPopover), keyEquivalent: "")
+        let openItem = NSMenuItem(title: "设置", action: #selector(openSettingsPopover), keyEquivalent: "c")
         openItem.target = self
         
         let quitItem = NSMenuItem(title: "退出", action: #selector(quitApp), keyEquivalent: "q")
@@ -181,7 +181,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let popover = NSPopover()
             popover.contentViewController = SettingsViewController()
             popover.behavior = .transient  // 点击外部自动关闭
-            popover.contentSize = NSSize(width: 300, height: 200)
+            popover.contentSize = NSSize(width: 350, height: 180)
             settingsPopover = popover
         }
         

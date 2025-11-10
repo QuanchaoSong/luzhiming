@@ -10,23 +10,20 @@ class HttpDiggerZhipu {
 
     private let baseURLString = "https://open.bigmodel.cn/api"
 
-    // API Key 不要硬编码在代码里，建议通过环境变量、配置文件或运行时注入
-    // 这里提供一个可注入的属性与便捷读取逻辑
-    private var apiKey: String? = "49252372e3884e838bcebe6866962683.LxDsEijZdOsXAiMd"
-
     // MARK: - Singleton
     static let shared = HttpDiggerZhipu()
     private init() {}
 
-    // MARK: - Public Configuration
-    func configure(apiKey: String) {
-        self.apiKey = apiKey
-    }
-
-    // fallback: 优先使用 configure 设置的 apiKey，其次尝试从环境变量读取 ZHIPU_API_KEY
+    // 从本地存储获取 API Key
     private func resolvedAPIKey() -> String? {
-        if let key = apiKey, !key.isEmpty { return key }
-        if let env = ProcessInfo.processInfo.environment["ZHIPU_API_KEY"], !env.isEmpty { return env }
+        // 优先从本地文件读取
+        if let key = LocalKeysTool.shared.getZhipuAPIKey(), !key.isEmpty {
+            return key
+        }
+        // 其次尝试从环境变量读取 ZHIPU_API_KEY
+        if let env = ProcessInfo.processInfo.environment["ZHIPU_API_KEY"], !env.isEmpty {
+            return env
+        }
         return nil
     }
 
