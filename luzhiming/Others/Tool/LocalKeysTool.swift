@@ -27,6 +27,26 @@ class LocalKeysTool {
         return saveKeyToFile(key, filename: "zhipu_api_key")
     }
     
+    /// 获取 OpenAI API Key
+    func getOpenAIAPIKey() -> String? {
+        return loadKeyFromFile(filename: "openai_api_key")
+    }
+    
+    /// 保存 OpenAI API Key
+    func saveOpenAIAPIKey(_ key: String) -> Bool {
+        return saveKeyToFile(key, filename: "openai_api_key")
+    }
+    
+    /// 获取 豆包 API Key
+    func getDoubaoAPIKey() -> String? {
+        return loadKeyFromFile(filename: "doubao_api_key")
+    }
+    
+    /// 保存 豆包 API Key
+    func saveDoubaoAPIKey(_ key: String) -> Bool {
+        return saveKeyToFile(key, filename: "doubao_api_key")
+    }
+    
     // MARK: - Private Methods
     private func loadKeyFromFile(filename: String) -> String? {
         let fileURL = keyFilesDirectory.appendingPathComponent(filename)
