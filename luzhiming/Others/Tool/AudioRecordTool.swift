@@ -18,6 +18,11 @@ class AudioRecordTool {
     private(set) var isRecording = false
     private var currentRecordingURL: URL?
     
+    // 录音计时器
+    private var recordingTimer: Timer?
+    private var recordingStartTime: Date?
+    private var currentRecordingDuration: TimeInterval = 0
+    
     // 存储所有录音文件的列表
     private(set) var recordingFiles: [URL] = []
     
@@ -25,6 +30,10 @@ class AudioRecordTool {
     var onRecordingStateChanged: ((Bool) -> Void)?
     // 录音完成回调（返回生成的文件 URL）
     var onRecordingCompleted: ((URL) -> Void)?
+    // 录音时长更新回调（每0.1秒触发一次，参数为当前录音时长）
+    var onRecordingDurationUpdated: ((TimeInterval) -> Void)?
+    // 录音时长不足回调
+    var onRecordingTooShort: ((TimeInterval, TimeInterval) -> Void)? // (实际时长, 最短时长)
     
     // MARK: - 初始化
     private init() {
@@ -122,12 +131,12 @@ class AudioRecordTool {
         // 确保目录存在：~/.luzhiming/audio_recordings/
         ensureAppDirectories()
         
-    // 设置录音文件路径到 ~/.luzhiming/audio_recordings/
+        // 设置录音文件路径到 ~/.luzhiming/audio_recordings/
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
         let dateString = dateFormatter.string(from: Date())
-    // 使用 WAV（Linear PCM），便于后端（如智谱 ASR）直接识别
-    let audioFilename = audioRecordingsDirectory.appendingPathComponent("recording_\(dateString).wav")
+        // 使用 WAV（Linear PCM），便于后端（如智谱 ASR）直接识别
+        let audioFilename = audioRecordingsDirectory.appendingPathComponent("recording_\(dateString).wav")
         
         // 保存当前录音的 URL
         currentRecordingURL = audioFilename
@@ -146,9 +155,17 @@ class AudioRecordTool {
             audioRecorder = try AVAudioRecorder(url: audioFilename, settings: settings)
             audioRecorder?.record()
             isRecording = true
+            
+            // 启动计时器
+            recordingStartTime = Date()
+            currentRecordingDuration = 0
+            startRecordingTimer()
+            
             onRecordingStateChanged?(true)
             print("✅ 录音已开始")
             print("   文件将保存至: \(audioFilename.path)")
+            print("   最短时长: \(SettingsInfo.shared.minRecordingDuration)秒")
+            print("   最长时长: \(SettingsInfo.shared.maxRecordingDuration)秒")
         } catch {
             print("❌ 录音失败: \(error.localizedDescription)")
             isRecording = false
@@ -166,7 +183,29 @@ class AudioRecordTool {
         
         print("⏹️ 停止录音")
         
+        // 停止计时器
+        stopRecordingTimer()
+        
         audioRecorder?.stop()
+        
+        // 检查录音时长
+        let minDuration = SettingsInfo.shared.minRecordingDuration
+        if currentRecordingDuration < minDuration {
+            print("⚠️ 录音时长不足: \(String(format: "%.2f", currentRecordingDuration))秒 < \(minDuration)秒")
+            
+            // 删除录音文件
+            if let url = currentRecordingURL {
+                try? FileManager.default.removeItem(at: url)
+                print("🗑️ 已删除时长不足的录音文件")
+            }
+            
+            // 回调：录音时长不足
+            onRecordingTooShort?(currentRecordingDuration, minDuration)
+            
+            // 清理状态
+            cleanupRecordingState()
+            return
+        }
         
         // 保存录音文件记录
         if let url = currentRecordingURL, FileManager.default.fileExists(atPath: url.path) {
@@ -177,15 +216,55 @@ class AudioRecordTool {
                 let sizeInMB = Double(fileSize) / 1024.0 / 1024.0
                 print("   文件大小: \(String(format: "%.2f", sizeInMB)) MB")
             }
+            print("   录音时长: \(String(format: "%.2f", currentRecordingDuration))秒")
 
             // 回调：录音完成，返回文件 URL
             onRecordingCompleted?(url)
+            
+            // 自动清理旧录音
+            SettingsInfo.shared.cleanupOldRecordings()
         } else {
             print("⚠️ 录音文件不存在或未保存")
         }
         
+        // 清理状态
+        cleanupRecordingState()
+    }
+    
+    // MARK: - 录音计时器
+    
+    private func startRecordingTimer() {
+        // 创建定时器，每 0.1 秒触发一次
+        recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            
+            // 计算录音时长
+            if let startTime = self.recordingStartTime {
+                self.currentRecordingDuration = Date().timeIntervalSince(startTime)
+                
+                // 回调：时长更新
+                self.onRecordingDurationUpdated?(self.currentRecordingDuration)
+                
+                // 检查是否超过最长时长
+                let maxDuration = SettingsInfo.shared.maxRecordingDuration
+                if self.currentRecordingDuration >= maxDuration {
+                    print("⏱️ 已达到最长录音时长: \(maxDuration)秒，自动停止")
+                    self.stopRecording()
+                }
+            }
+        }
+    }
+    
+    private func stopRecordingTimer() {
+        recordingTimer?.invalidate()
+        recordingTimer = nil
+    }
+    
+    private func cleanupRecordingState() {
         audioRecorder = nil
         currentRecordingURL = nil
+        recordingStartTime = nil
+        currentRecordingDuration = 0
         isRecording = false
         onRecordingStateChanged?(false)
     }
@@ -197,5 +276,16 @@ class AudioRecordTool {
         } else {
             startRecording()
         }
+    }
+    
+    /// 获取当前录音时长
+    func getCurrentRecordingDuration() -> TimeInterval {
+        return currentRecordingDuration
+    }
+    
+    /// 获取录音剩余时长（最大时长 - 当前时长）
+    func getRemainingRecordingDuration() -> TimeInterval {
+        let maxDuration = SettingsInfo.shared.maxRecordingDuration
+        return max(0, maxDuration - currentRecordingDuration)
     }
 }

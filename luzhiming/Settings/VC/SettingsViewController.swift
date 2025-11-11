@@ -197,9 +197,32 @@ class SettingsViewController: NSViewController {
     
     // MARK: - 加载保存的设置
     private func loadSavedKeys(into apiView: ApiKeysAreaView) {
-        if let zhipuKey = LocalKeysTool.shared.getZhipuAPIKey() { apiView.setKey(zhipuKey, for: "zhipu"); apiView.setSelectedProvider("zhipu") }
-        if let openaiKey = loadKeyFromFile(filename: "openai_api_key") { apiView.setKey(openaiKey, for: "openai") }
-        if let doubaoKey = loadKeyFromFile(filename: "doubao_api_key") { apiView.setKey(doubaoKey, for: "doubao") }
+        // 从 SettingsInfo 获取当前选中的服务商
+        let currentProvider = SettingsInfo.shared.apiKeyProvider
+        let providerId = mapProviderToId(currentProvider)
+        
+        // 加载各厂商的 API Keys
+        if let zhipuKey = LocalKeysTool.shared.getZhipuAPIKey() {
+            apiView.setKey(zhipuKey, for: "zhipu")
+        }
+        if let openaiKey = loadKeyFromFile(filename: "openai_api_key") {
+            apiView.setKey(openaiKey, for: "openai")
+        }
+        if let doubaoKey = loadKeyFromFile(filename: "doubao_api_key") {
+            apiView.setKey(doubaoKey, for: "doubao")
+        }
+        
+        // 设置当前选中的服务商
+        apiView.setSelectedProvider(providerId)
+    }
+    
+    // MARK: - Helper
+    private func mapProviderToId(_ provider: ApiKeyProvider) -> String {
+        switch provider {
+        case .zhipu: return "zhipu"
+        case .openai: return "openai"
+        case .doubao: return "doubao"
+        }
     }
     
     // MARK: - 文件读写（本地辅助）

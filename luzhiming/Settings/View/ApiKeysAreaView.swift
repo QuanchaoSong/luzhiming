@@ -70,6 +70,13 @@ class ApiKeysAreaView: NSView {
 				for (id, other) in self.providerCards where id != p.1 {
 					other.setSelected(false)
 				}
+				
+				// 保存选中的服务商到 SettingsInfo
+				if isSelected {
+					if let provider = self.mapIdToProvider(p.1) {
+						SettingsInfo.shared.apiKeyProvider = provider
+					}
+				}
 			}
             
 			card.onSaveTapped { [weak self] providerId, apiKey in
@@ -95,6 +102,16 @@ class ApiKeysAreaView: NSView {
 	func setSelectedProvider(_ providerId: String) {
 		for (id, card) in providerCards {
 			card.setSelected(id == providerId)
+		}
+	}
+	
+	// MARK: - Helper
+	private func mapIdToProvider(_ id: String) -> ApiKeyProvider? {
+		switch id {
+		case "zhipu": return .zhipu
+		case "openai": return .openai
+		case "doubao": return .doubao
+		default: return nil
 		}
 	}
 }
