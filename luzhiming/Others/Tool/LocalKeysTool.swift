@@ -37,12 +37,12 @@ class LocalKeysTool {
         return saveKeyToFile(key, filename: "openai_api_key")
     }
     
-    /// 获取 豆包 API Key
+    /// 获取豆包 API Key
     func getDoubaoAPIKey() -> String? {
         return loadKeyFromFile(filename: "doubao_api_key")
     }
     
-    /// 保存 豆包 API Key
+    /// 保存豆包 API Key
     func saveDoubaoAPIKey(_ key: String) -> Bool {
         return saveKeyToFile(key, filename: "doubao_api_key")
     }

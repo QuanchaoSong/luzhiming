@@ -16,9 +16,18 @@ class MainVC: NSViewController {
         super.viewDidLoad()
         setupCircleView()
         
-        // 录音完成后，自动调用智谱 ASR 进行转写
+        // 录音完成后，根据设置自动选择对应的 ASR 服务
         AudioRecordTool.shared.onRecordingCompleted = { fileURL in
-            self.transcribeAudioWithZhipu(fileURL: fileURL);
+            let provider = SettingsInfo.shared.apiKeyProvider
+            switch provider {
+            case .zhipu:
+                self.transcribeAudioWithZhipu(fileURL: fileURL)
+            case .openai:
+                self.transcribeAudioWithOpenAI(fileURL: fileURL)
+            case .doubao:
+                // TODO: 豆包 ASR 待实现
+                print("[DOUBAO ASR] 豆包语音识别待实现")
+            }
         }
     }
     
@@ -47,6 +56,25 @@ class MainVC: NSViewController {
             circleView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             circleView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+
+    private func transcribeAudioWithOpenAI(fileURL: URL) {
+        print("[OPENAI ASR] 开始转写: \(fileURL.lastPathComponent)")
+        HttpDiggerOpenAI.shared.transcribe(fileURL: fileURL) { result in
+            switch result {
+            case .success(let resp):
+                let text = resp.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                if !text.isEmpty {
+                    print("[OPENAI ASR] text=\(text)")
+                    GlobalTool.copyToClipboard(text)
+                    print("[OPENAI ASR] 已复制到剪贴板")
+                } else {
+                    print("[OPENAI ASR] 未返回可用文本")
+                }
+            case .failure(let error):
+                print("[OPENAI ASR] failed: \(error.localizedDescription)")
+            }
+        }
     }
     
     private func transcribeAudioWithZhipu(fileURL: URL) {
